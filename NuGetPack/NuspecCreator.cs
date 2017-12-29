@@ -70,9 +70,11 @@ namespace PubComp.Building.NuGetPack
         public void CreatePackage(
             string projectPath, string assemblyPath, bool isDebug,
             bool doCreatePkg = true, bool doIncludeCurrentProj = false,
-            string preReleaseSuffixOverride = null)
+            string preReleaseSuffixOverride = null, bool doPublish = false, string apiKey = "")
         {
             Console.WriteLine("Creating nuspec file");
+
+            if (doPublish) Console.WriteLine("Package publishing is ON");
 
             NuGetPackConfig config;
             var doc = CreateNuspec(
@@ -96,6 +98,37 @@ namespace PubComp.Building.NuGetPack
 
             var doSeparateSymbols = config?.DoSeparateSymbols ?? false;
             CreatePackage(nuspecPath, doSeparateSymbols);
+            
+                 #region publish
+            if (doPublish)
+            {
+                //get version from the nuspecPath
+                //I have : assemblyPath
+                //   Assembly assembly =   Assembly.LoadFile(assemblyPath);
+                Console.WriteLine("-----");
+                Console.WriteLine("\tPublishing : " + assemblyPath);
+                FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assemblyPath);
+                string version = fvi.FileVersion;
+
+                string packageName = "";
+                //todo get the name from the NuSpec
+                string[] specFile = File.ReadAllLines(nuspecPath);
+                foreach (var l in specFile)
+                {
+                    if (l.Contains("<id>"))
+                        packageName = l.Replace("<id>", "").Replace("</id>", "").Trim();
+                }
+                string dbasePath = new FileInfo(nuspecPath).Directory.FullName;
+
+                string packagePath = Path.Combine(dbasePath,
+                    packageName + "." + version + ".nupkg")
+                    ;
+                Console.WriteLine("\tPackage Path : " + packagePath);
+                Thread.Sleep(2000);
+
+                PublishPackage(packagePath, apiKey);
+            }
+            #endregion
         }
 
         public void CreatePackage(string nuspecPath, bool doSeparateSymbols)
@@ -152,7 +185,7 @@ namespace PubComp.Building.NuGetPack
             }
         }
 
-        public void PublishPackage(string packagePath)
+        public void PublishPackage(string packagePath, string apiKey = "", string source = "https://api.nuget.org/v3/index.json")
         {
             if (packagePath == null)
                 throw new ArgumentNullException(nameof(packagePath));
@@ -164,16 +197,58 @@ namespace PubComp.Building.NuGetPack
 
             var prevDir = Environment.CurrentDirectory;
 
+            #region create a batch to execute in post build , set api key
+            string tmpPublishBatch = Path.GetTempFileName() + "_nuget_publisher.bat";
+            File.WriteAllText(tmpPublishBatch, "@echo off\nrem That publishes the nuget Package " + packagePath + "\n\n");
+           
+                //set APIKey
+                if (apiKey != "")
+                {
+                   // var process = Process.Start(nuGetExe, "setApiKey " + apiKey);
+                   // process.WaitForExit();
+                    File.AppendAllText(tmpPublishBatch, nuGetExe + " setApiKey " + apiKey + "\n");
+
+                }
+#endregion
             try
             {
                 // ReSharper disable once AssignNullToNotNullAttribute
                 Environment.CurrentDirectory = Path.GetDirectoryName(packagePath);
 
-                var process = Process.Start(nuGetExe, "Push " + packagePath);
+               
+                string u = "";
+                if (source != "") u = " -Source " + source;
+
+                string arg = "Push " + packagePath + u;
+                Console.WriteLine("Publishing command : nuget.exe " + arg);
+
+                File.AppendAllText(tmpPublishBatch, nuGetExe + " " + arg + "\n");
+
+                Console.WriteLine("Executing publishing batch file: " + tmpPublishBatch);
+
+                //var process = Process.Start(nuGetExe, arg);
+                string cliArg = "/c \"call " + tmpPublishBatch + "\"";
+               // Console.WriteLine("cliargs: " + cliArg);
+                var startInfo = new ProcessStartInfo
+                {
+                    UseShellExecute = false,
+                    FileName = "cmd.exe",
+                    Arguments = cliArg
+                };
+               // var process = Process.Start("cmd.exe",cliArg );
+
+                startInfo.RedirectStandardOutput = true;
+
+                var process = Process.Start(startInfo);
                 if (process == null)
-                    throw new ApplicationException($"Could not start process {nuGetExe}");
+                    throw new ApplicationException($"Could not start process PUBLISHING "+ tmpPublishBatch);
 
                 process.WaitForExit();
+
+                var output = process.StandardOutput.ReadToEnd();
+                Console.WriteLine();
+                Console.WriteLine(output);
+                
             }
             finally
             {
