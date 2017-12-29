@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("PubComp.Building.NuGetPackageTemplate.Vsix")]
+[assembly: AssemblyTitle("PSPubComp.Building.NuGetPackageTemplate.Vsix")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("PubComp.Building.NuGetPackageTemplate.Vsix")]
+[assembly: AssemblyProduct("PSPubComp.Building.NuGetPackageTemplate.Vsix")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("4c42e21b-9c1c-4910-9723-b05148fe8ccb")]
+[assembly: Guid("09862aa5-4f24-4a46-98dd-5059e5cc1b3b")]
 
 // Version information for an assembly consists of the following four values:
 //

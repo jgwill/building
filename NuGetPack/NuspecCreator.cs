@@ -194,7 +194,7 @@ namespace PubComp.Building.NuGetPack
             Console.WriteLine("Publishing Package");
 
             // ReSharper disable once AssignNullToNotNullAttribute
-            var nuGetExe = Path.Combine(Path.GetDirectoryName(this.GetType().Assembly.Location), "NuGet.exe");
+            var nuGetExe = "\""+ Path.Combine(Path.GetDirectoryName(this.GetType().Assembly.Location), "NuGet.exe") + "\"";
 
             var prevDir = Environment.CurrentDirectory;
 
@@ -219,8 +219,12 @@ namespace PubComp.Building.NuGetPack
                
                 string u = "";
                 if (source != "") u = " -Source " + source;
+                string packageDirectoryPath = new FileInfo(packagePath).Directory.FullName;
 
-                string arg = "Push " + packagePath + u;
+                Console.WriteLine("Copying " + packagePath + " to " + "latest.nupkg");
+                File.Copy(packagePath, Path.Combine(packageDirectoryPath, "latest.nupkg"),true); //creating a latest.nupkg
+
+                string arg = "Push " +"\"" + packagePath + "\"" + u;
                 Console.WriteLine("Publishing command : nuget.exe " + arg);
 
                 File.AppendAllText(tmpPublishBatch, nuGetExe + " " + arg + "\n");
