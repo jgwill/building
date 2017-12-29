@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Xml.Linq;
 using System.Xml.XPath;
 
@@ -124,7 +125,7 @@ namespace PubComp.Building.NuGetPack
                     packageName + "." + version + ".nupkg")
                     ;
                 Console.WriteLine("\tPackage Path : " + packagePath);
-                Thread.Sleep(2000);
+               // Thread.Sleep(2000);
 
                 PublishPackage(packagePath, apiKey);
             }
