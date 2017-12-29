@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 
 namespace PubComp.Building.NuGetPack
@@ -10,43 +11,68 @@ namespace PubComp.Building.NuGetPack
     public class Program
     {
         static string nuget_setting_file = "nuget-apikey.txt";
-        static string publish_setting_file = "nuget-publish.txt";
+        static string publish_setting_file = "nuget-publish-flag.txt";
         public static void Main(string[] args)
         {
 
             Console.WriteLine("--JGWill mod--");
-            
+
             CommandLineArguments cla;
 
-              string  apiKey;
-            bool   doPublish;
+            string apiKey;
+            bool doPublish;
 
             doPublish = false;
             apiKey = "";
 
+            string scde_conf_dir = Path.Combine(
+                                       Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), ".SCDE");
 
-            if (File.Exists(nuget_setting_file))
+            string apiKeyFilePath =
+                Path.Combine(scde_conf_dir, nuget_setting_file);
+
+            string publish_setting_filepath = Path.Combine(scde_conf_dir, publish_setting_file);
+
+            if (File.Exists(apiKeyFilePath))
             {
-                apiKey = File.ReadAllText(nuget_setting_file).Trim();
-                if (apiKey.Length < 20) apiKey = ""; //not the api key
-                
-                if (File.Exists(publish_setting_file))
+                //file exist
+                apiKey = File.ReadAllText(apiKeyFilePath).Trim();
+                if (apiKey.Length < 23) apiKey = ""; //not the api key
+
+                if (File.Exists(publish_setting_filepath))
                 {
-                    string c = File.ReadAllText(publish_setting_file).Trim();
-                    doPublish =  (c == "1" ) || (c.ToLower() == "true");
+                    string c = File.ReadAllText(publish_setting_filepath).Trim();
+                    doPublish = (c == "1") || (c.ToLower() == "true");
                 }
             }
             else
             {
-                Console.WriteLine("no api key in file : " + nuget_setting_file);
-                Console.WriteLine("no 1 or true in file to enable publishing : " + publish_setting_file);
-                File.WriteAllText(nuget_setting_file, "API_key_here");
-                File.WriteAllText(publish_setting_file, "false");
-                Console.WriteLine("The two files were created so you can config them");
-                
+                Directory.CreateDirectory(scde_conf_dir);
+                Console.WriteLine("--------IMPORTANT------------------");
+                Console.WriteLine("-- A File where to put your key was created under : " + apiKeyFilePath);
+                Console.WriteLine("-- FILL YOUR KEY THERE --");
+                File.WriteAllText(apiKeyFilePath, "API_key_here");
+                File.WriteAllText(publish_setting_filepath, "true");
+                Process.Start("notepad.exe", apiKeyFilePath);
+                Environment.Exit(4);
             }
-            
-            
+
+            //if (File.Exists(nuget_setting_file))
+            //{
+
+
+            //}
+            //else
+            //{
+            //    Console.WriteLine("no api key in file : " + nuget_setting_file);
+            //    Console.WriteLine("no 1 or true in file to enable publishing : " + publish_setting_file);
+            //    File.WriteAllText(nuget_setting_file, "API_key_here");
+            //    File.WriteAllText(publish_setting_file, "false");
+            //    Console.WriteLine("The two files were created so you can config them");
+
+            //}
+
+
             if (!TryParseArguments(args, out cla))
             {
                 WriteError();
@@ -58,7 +84,7 @@ namespace PubComp.Building.NuGetPack
             if (cla.Mode != Mode.Solution)
             {
                 creator.CreatePackage(
-                    cla.ProjPath, cla.DllPath, cla.IsDebug, cla.DoCreateNuPkg, cla.DoIncludeCurrentProj, cla.PreReleaseSuffixOverride);
+                    cla.ProjPath, cla.DllPath, cla.IsDebug, cla.DoCreateNuPkg, cla.DoIncludeCurrentProj, cla.PreReleaseSuffixOverride, doPublish, apiKey);
             }
             else
             {
