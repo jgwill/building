@@ -8,10 +8,44 @@ namespace PubComp.Building.NuGetPack
     /// </summary>
     public class Program
     {
+        static string nuget_setting_file = "nuget-apikey.txt";
+        static string publish_setting_file = "nuget-publish.txt";
         public static void Main(string[] args)
         {
+
+            Console.WriteLine("--JGWill mod--");
+            
             CommandLineArguments cla;
 
+              string  apiKey;
+            bool   doPublish;
+
+            doPublish = false;
+            apiKey = "";
+
+
+            if (File.Exists(nuget_setting_file))
+            {
+                apiKey = File.ReadAllText(nuget_setting_file).Trim();
+                if (apiKey.Length < 20) apiKey = ""; //not the api key
+                
+                if (File.Exists(publish_setting_file))
+                {
+                    string c = File.ReadAllText(publish_setting_file).Trim();
+                    doPublish =  (c == "1" ) || (c.ToLower() == "true");
+                }
+            }
+            else
+            {
+                Console.WriteLine("no api key in file : " + nuget_setting_file);
+                Console.WriteLine("no 1 or true in file to enable publishing : " + publish_setting_file);
+                File.WriteAllText(nuget_setting_file, "API_key_here");
+                File.WriteAllText(publish_setting_file, "false");
+                Console.WriteLine("The two files were created so you can config them");
+                
+            }
+            
+            
             if (!TryParseArguments(args, out cla))
             {
                 WriteError();
